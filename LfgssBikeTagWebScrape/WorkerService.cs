@@ -2,39 +2,78 @@
 // @Bellarmine-Head 2024
 //
 
+using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace BellarmineHead.Lfgss.BikeTag.WebScrape;
 
-internal sealed class WorkerService : IHostedService //, IHostedLifecycleService
+// The meat of the application.
+internal sealed class WorkerService : IHostedService
 {
     private readonly ILogger _logger;
     private readonly IHostApplicationLifetime _appLifetime;
     private readonly LfgssHttpClient _lfgssHttpClient;
 
-    public WorkerService(ILogger<WorkerService> logger, IHostApplicationLifetime appLifetime, LfgssHttpClient lfgssHttpClient)
+    private readonly Int32 _startPage;
+    private readonly Int32 _numPages;
+
+    // Constructor.
+    public WorkerService(ILogger<WorkerService> logger, IHostApplicationLifetime appLifetime, IConfiguration config,
+        LfgssHttpClient lfgssHttpClient)
     {
         _logger = logger;
         _appLifetime = appLifetime;
-        _lfgssHttpClient = lfgssHttpClient;
+        _lfgssHttpClient = lfgssHttpClient;     // should we get this via the ctor, or should we query for it before each request?
+
+        _startPage = 1;
+        _numPages = 1;
+
+        if (Int32.TryParse(config["startPage"], NumberStyles.Integer, CultureInfo.InvariantCulture, out Int32 startPageInt))
+        {
+            if (startPageInt < 1)
+                startPageInt = 1;
+
+            _startPage = startPageInt;
+        }
+
+        if (Int32.TryParse(config["numPages"], NumberStyles.Integer, CultureInfo.InvariantCulture, out Int32 numPagesInt))
+        {
+            if (numPagesInt < 1)
+                numPagesInt = 1;
+
+            _numPages = numPagesInt;
+        }
     }
 
-    async Task IHostedService.StartAsync(CancellationToken cancellationToken)
+    // Service started.
+    async Task IHostedService.StartAsync(CancellationToken ct)
     {
-        _logger.LogInformation("2. StartAsync has been called.");
+        for (var page = _startPage; page < (_startPage + _numPages); ++page)
+        {
+            if (ct.IsCancellationRequested)
+                break;
 
-        var html = await _lfgssHttpClient.GetHomePageHtmlAsync();
+            var html = await _lfgssHttpClient.GetBikeTagPageHtmlAsync(page, ct);
 
-        _logger.LogInformation("{Html}", html);
+            if (ct.IsCancellationRequested)
+                break;
+
+            _logger.LogInformation("{Html}", html[..100]);
+
+            // the 25 posts per page are <li> items within the first <ul class="list-comments"> ... </ul> on each page
+        }
 
         _appLifetime.StopApplication();
     }
 
-    Task IHostedService.StopAsync(CancellationToken cancellationToken)
+    // Service stopped.
+    Task IHostedService.StopAsync(CancellationToken ct)
     {
         return Task.CompletedTask;
     }

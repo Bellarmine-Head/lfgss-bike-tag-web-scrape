@@ -21,8 +21,12 @@ static class Program
         var httpClientBuilder = builder.Services.AddHttpClient<LfgssHttpClient>(
             configureClient: static client =>
             {
-                client.BaseAddress = new Uri("https://www.lfgss.com/");
+                client.BaseAddress = new Uri("https://www.lfgss.com/conversations/169251/"); // Brighton Bike Tag base address
+                client.DefaultRequestHeaders.Add("User-Agent", "Chrome/124.0.0.0");          // otherwise the response will be 403
+                client.DefaultRequestHeaders.Add("Accept", "text/html");
             });
+
+        httpClientBuilder.AddStandardResilienceHandler();
 
         builder.Services.AddHostedService<WorkerService>();
 
