@@ -18,7 +18,7 @@ static class Program
     {
         var builder = Host.CreateApplicationBuilder(args);
 
-        var httpClientBuilder = builder.Services.AddHttpClient<LfgssHttpClient>(
+        var httpClientBuilder = builder.Services.AddHttpClient("brightonBikeTagHttpClient",
             configureClient: static client =>
             {
                 client.BaseAddress = new Uri("https://www.lfgss.com/conversations/169251/"); // Brighton Bike Tag base address

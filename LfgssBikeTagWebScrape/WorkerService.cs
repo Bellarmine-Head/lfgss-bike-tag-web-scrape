@@ -3,9 +3,10 @@
 //
 
 using System;
-using System.Globalization;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Globalization;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,18 +19,18 @@ internal sealed class WorkerService : IHostedService
 {
     private readonly ILogger _logger;
     private readonly IHostApplicationLifetime _appLifetime;
-    private readonly LfgssHttpClient _lfgssHttpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     private readonly Int32 _startPage;
     private readonly Int32 _numPages;
 
     // Constructor.
     public WorkerService(ILogger<WorkerService> logger, IHostApplicationLifetime appLifetime, IConfiguration config,
-        LfgssHttpClient lfgssHttpClient)
+        IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _appLifetime = appLifetime;
-        _lfgssHttpClient = lfgssHttpClient;     // should we get this via the ctor, or should we query for it before each request?
+        _httpClientFactory = httpClientFactory;
 
         _startPage = 1;
         _numPages = 1;
@@ -54,17 +55,21 @@ internal sealed class WorkerService : IHostedService
     // Service started.
     async Task IHostedService.StartAsync(CancellationToken ct)
     {
+        HttpClient httpClient;
+
         for (var page = _startPage; page < (_startPage + _numPages); ++page)
         {
             if (ct.IsCancellationRequested)
                 break;
 
-            var html = await _lfgssHttpClient.GetBikeTagPageHtmlAsync(page, ct);
+            httpClient = _httpClientFactory.CreateClient("brightonBikeTagHttpClient");
+
+            var html = await LfgssHttpClient.GetBikeTagPageHtmlAsync(httpClient, page, ct);
 
             if (ct.IsCancellationRequested)
                 break;
 
-            _logger.LogInformation("{Html}", html[..100]);
+            _logger.LogInformation("{Html}", html[..400]);
 
             // the 25 posts per page are <li> items within the first <ul class="list-comments"> ... </ul> on each page
         }

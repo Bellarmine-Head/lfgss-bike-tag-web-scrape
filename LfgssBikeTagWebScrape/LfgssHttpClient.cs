@@ -11,20 +11,17 @@ using static System.FormattableString;
 
 namespace BellarmineHead.Lfgss.BikeTag.WebScrape;
 
-// Talks to the LFGSS website.
-internal sealed class LfgssHttpClient
+/// <summary>
+/// Talks to the LFGSS website.
+/// </summary>
+static class LfgssHttpClient
 {
-    private readonly HttpClient _httpClient;
-
-    // Constructor.
-    public LfgssHttpClient(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
-
     /// <summary>
     /// Gets the HTML text for the specified bike tag page.
     /// </summary>
+    /// <param name="httpClient">
+    /// The HTTP client to use.
+    /// </param>
     /// <param name="page">
     /// 1-based page number.
     /// </param>
@@ -37,14 +34,14 @@ internal sealed class LfgssHttpClient
     /// <exception cref="HttpRequestException">
     /// Thrown if the request wasn't successful.
     /// </exception>
-    public async Task<String> GetBikeTagPageHtmlAsync(Int32 page, CancellationToken ct)
+    public static async Task<String> GetBikeTagPageHtmlAsync(HttpClient httpClient, Int32 page, CancellationToken ct)
     {
         if (page < 1)
             page = 1;
 
         var offset = (page - 1) * 25;
 
-        var response = await _httpClient.GetAsync(Invariant($"?offset={offset}"), ct);
+        var response = await httpClient.GetAsync(Invariant($"?offset={offset}"), ct);
 
         response.EnsureSuccessStatusCode();
 
