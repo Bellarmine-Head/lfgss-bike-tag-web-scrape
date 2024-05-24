@@ -14,11 +14,17 @@ namespace BellarmineHead.Lfgss.BikeTag.WebScrape;
 /// <summary>
 /// Talks to the LFGSS website.
 /// </summary>
-static class LfgssHttpClient
+static class LfgssAccess
 {
     /// <summary>
     /// Gets the HTML text for the specified bike tag page.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the page number is too high (i.e. the page doesn't exist), LFGSS will return a status of 500.  But it will also do so for
+    /// other internal errors, so we can't rely on 500 as meaning "page doesn't exist" to the exclusion of all other errors.
+    /// </para>
+    /// </remarks>
     /// <param name="httpClient">
     /// The HTTP client to use.
     /// </param>

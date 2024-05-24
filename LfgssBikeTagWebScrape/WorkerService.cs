@@ -55,31 +55,63 @@ internal sealed class WorkerService : IHostedService
     // Service started.
     async Task IHostedService.StartAsync(CancellationToken ct)
     {
-        HttpClient httpClient;
+        Console.Out.WriteLine($"Start page: {_startPage}, number of pages: {_numPages}");
 
-        for (var page = _startPage; page < (_startPage + _numPages); ++page)
-        {
-            if (ct.IsCancellationRequested)
-                break;
-
-            httpClient = _httpClientFactory.CreateClient("brightonBikeTagHttpClient");
-
-            var html = await LfgssHttpClient.GetBikeTagPageHtmlAsync(httpClient, page, ct);
-
-            if (ct.IsCancellationRequested)
-                break;
-
-            _logger.LogInformation("{Html}", html[..400]);
-
-            // the 25 posts per page are <li> items within the first <ul class="list-comments"> ... </ul> on each page
-        }
-
-        _appLifetime.StopApplication();
+        await ScrapePagesAsync(ct);
     }
 
     // Service stopped.
     Task IHostedService.StopAsync(CancellationToken ct)
     {
         return Task.CompletedTask;
+    }
+
+    // This is what the app is for.
+    private async Task ScrapePagesAsync(CancellationToken ct)
+    {
+        String html;
+        HttpClient httpClient;
+
+        // For all of the pages...
+        for (var page = _startPage; page < (_startPage + _numPages); ++page)
+        {
+            if (ct.IsCancellationRequested)
+                break;
+
+
+            // Get the HTML for the first/next page.
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2.0), ct);    // a short delay between requests; don't overload LFGSS
+
+                httpClient = _httpClientFactory.CreateClient("brightonBikeTagHttpClient");
+                html = await LfgssAccess.GetBikeTagPageHtmlAsync(httpClient, page, ct);
+            }
+            catch (HttpRequestException)
+            {
+                // for the time being we'll regard this as: page not found (i.e. we've gone too high in the page numbers)
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get a page of HTML. {Error}", ex.Message);
+                _appLifetime.StopApplication();
+                return;
+            }
+
+            if (ct.IsCancellationRequested)
+                break;
+
+
+            // 
+            await HtmlParser.ParsePageAsync(html, ct);
+
+            if (ct.IsCancellationRequested)
+                break;
+        }
+
+
+        // Nothing more to do.
+        _appLifetime.StopApplication();
     }
 }
