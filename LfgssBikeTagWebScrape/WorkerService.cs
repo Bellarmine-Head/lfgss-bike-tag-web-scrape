@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -69,10 +70,14 @@ internal sealed class WorkerService : IHostedService
     // This is what the app is for.
     private async Task ScrapePagesAsync(CancellationToken ct)
     {
-        String html;
-        HttpClient httpClient;
+        // Results list.
+        List<BikeTagPage> resultsPages = [];
+
 
         // For all of the pages...
+        String html;
+        HttpClient httpClient;
+        BikeTagPage bikeTagpage;
         for (var page = _startPage; page < (_startPage + _numPages); ++page)
         {
             if (ct.IsCancellationRequested)
@@ -82,7 +87,7 @@ internal sealed class WorkerService : IHostedService
             // Get the HTML for the first/next page.
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(2.0), ct);    // a short delay between requests; don't overload LFGSS
+                await Task.Delay(TimeSpan.FromSeconds(1.0), ct);    // a short delay between requests; don't overload LFGSS
 
                 httpClient = _httpClientFactory.CreateClient("brightonBikeTagHttpClient");
                 html = await LfgssAccess.GetBikeTagPageHtmlAsync(httpClient, page, ct);
@@ -103,11 +108,31 @@ internal sealed class WorkerService : IHostedService
                 break;
 
 
-            // can throw
-            var posts = await HtmlParser.ParsePageAsync(html, ct);
+            // Parse into a BikeTagPage instance.
+            try
+            {
+                bikeTagpage = await HtmlParser.ParsePageAsync(html, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get parse a page of HTML. {Error}", ex.Message);
+                _appLifetime.StopApplication();
+                return;
+            }
+
+
+            // Add this page to the results list.
+            resultsPages.Add(bikeTagpage);
 
             if (ct.IsCancellationRequested)
                 break;
+        }
+
+
+        // Save the results.
+        if (ct.IsCancellationRequested is false)
+        {
+            // todo: write `resultsPages` to file as JSON
         }
 
 

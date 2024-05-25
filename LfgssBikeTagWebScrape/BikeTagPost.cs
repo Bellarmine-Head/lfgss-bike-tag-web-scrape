@@ -3,9 +3,29 @@
 //
 
 using System;
-using System.Collections.Generic;
 
 namespace BellarmineHead.Lfgss.BikeTag.WebScrape;
+
+/// <summary>
+/// Represents a bike tag page.
+/// </summary>
+class BikeTagPage
+{
+    /// <summary>
+    /// Page number: 1, 2, 3...
+    /// </summary>
+    public required Int32 PageNumber { get; init; }
+
+    /// <summary>
+    /// Page URL.
+    /// </summary>
+    public required Uri PageUrl { get; init; }
+
+    /// <summary>
+    /// 1 - 25 posts on the page.
+    /// </summary>
+    public required BikeTagPost[] Posts { get; init; }
+}
 
 /// <summary>
 /// Represents a bike tag post (aka a comment).
@@ -19,20 +39,29 @@ namespace BellarmineHead.Lfgss.BikeTag.WebScrape;
 class BikeTagPost
 {
     /// <summary>
+    /// Overall post number, across all pages.  1, 2, 3...
+    /// </summary>
+    public required Int32 PostNumber { get; init; }
+
+    /// <summary>
+    /// URL to this particular post.
+    /// </summary>
+    public required Uri PostUrl { get; init; }
+
+    /// <summary>
     /// Author name - e.g. Squash.
     /// </summary>
-    public String AuthorName { get; set; }
+    public required String AuthorName { get; init; }
 
     /// <summary>
     /// The zero or more images in the tag.
     /// </summary>
-    public BikeTagPostImage[] Images { get; set; } = [];
+    public BikeTagPostImage[] Images { get; init; } = [];
 }
 
 class BikeTagPostImage
 {
-    public Uri ImageUri { get; set; }
-    public String AltText { get; set; }
-    public String Ttitle { get; set; }
+    public required Uri ImageUri { get; init; }
+    public required String AltText { get; init; }
+    public required String Ttitle { get; init; }
 }
-
