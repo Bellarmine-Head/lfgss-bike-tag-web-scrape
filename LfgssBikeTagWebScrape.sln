@@ -5,7 +5,7 @@ VisualStudioVersion = 17.9.34902.65
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LfgssBikeTagWebScrape", "LfgssBikeTagWebScrape\LfgssBikeTagWebScrape.csproj", "{0B77E512-D2D9-44A4-A127-293912126666}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B4713EDF-364B-45D1-9DAF-16A57B8FACC5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E6122F0-4C36-4CC2-BEAD-59B528CAFFCF}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection

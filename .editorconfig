@@ -1,4 +1,4 @@
-﻿[*.cs]
+﻿[*.{cs,vb}]
 
-# IDE0290: Use primary constructor
-dotnet_diagnostic.IDE0290.severity = none
+# IDE0270: Use coalesce expression
+dotnet_diagnostic.IDE0270.severity = none

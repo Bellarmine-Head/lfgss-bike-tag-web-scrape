@@ -103,8 +103,8 @@ internal sealed class WorkerService : IHostedService
                 break;
 
 
-            // 
-            await HtmlParser.ParsePageAsync(html, ct);
+            // can throw
+            var posts = await HtmlParser.ParsePageAsync(html, ct);
 
             if (ct.IsCancellationRequested)
                 break;
