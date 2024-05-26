@@ -3,6 +3,8 @@
 //
 
 using System;
+using System.IO;
+using System.Text;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +14,8 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+
+using Newtonsoft.Json;
 
 namespace BellarmineHead.Lfgss.BikeTag.WebScrape;
 
@@ -132,7 +136,24 @@ internal sealed class WorkerService : IHostedService
         // Save the results.
         if (ct.IsCancellationRequested is false)
         {
-            // todo: write `resultsPages` to file as JSON
+            var json = JsonConvert.SerializeObject(resultsPages, Formatting.Indented);
+
+            String pathname = null;
+            try
+            {
+                var start = _startPage;
+                var end = _startPage + _numPages - 1;
+                var time = DateTime.Now;
+                var fileName = $"bike-tag-web-scrape-{time.Year}-{time.Month}-{time.Day}-{time.Hour}-{time.Minute}-pages-{start}-to-{end}";
+                var folderName = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                pathname = Path.Combine(folderName, fileName);
+
+                File.WriteAllText(pathname, json, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to write the results to file {Filename}.  {Error}", pathname, ex.Message);
+            }
         }
 
 
